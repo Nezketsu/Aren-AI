@@ -1,0 +1,29 @@
+# Essential .gitignore for Next.js/TypeScript project
+# Ignore dependencies and build artifacts
+node_modules/
+.next/
+out/
+build/
+coverage/
+
+# Ignore environment and secret files
+.env*
+*.pem
+
+# Ignore debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Ignore OS and tool-specific files
+.DS_Store
+.vercel
+
+# Ignore TypeScript build info and generated files
+*.tsbuildinfo
+next-env.d.ts
+src/generated/prisma/
+
+# Allow only essential files: source code, config, public assets
+.env*.local
