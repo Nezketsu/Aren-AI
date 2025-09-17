@@ -1,158 +1,59 @@
 'use client'
 
-import { Icons } from "@/components/ui/icons"
-import { motion } from 'framer-motion'
-
-// Animation variants for the container
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
-    }
-  }
-}
-
-// Animation variants for each feature card
-const cardVariants = {
-  hidden: { y: 30, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1,
-    transition: { 
-      type: "spring" as const, 
-      stiffness: 100, 
-      damping: 15 
-    }
-  }
-}
-
-// Animation variants for the whole feature section
-const sectionVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      when: "beforeChildren",
-      staggerChildren: 0.1,
-    }
-  }
-};
-
-// Animation variants for the header elements
-const headerVariants = {
-  hidden: { opacity: 0, y: -20 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: {
-      duration: 0.6
-    }
-  }
-};
+import { Trophy, Calendar, Users, Sun } from "lucide-react"
 
 export function Features() {
     return (
-        <motion.div 
-            className="features px-4 py-24 relative z-10"
-            variants={sectionVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-        >
-            <div className="text-center mb-16">
-                <motion.h2 
-                    className="text-3xl md:text-4xl font-bold text-gray-900 mb-4"
-                    variants={headerVariants}
-                >
-                    Powerful Features
-                </motion.h2>
-                <motion.p
-                    className="text-xl text-gray-700 max-w-2xl mx-auto"
-                    variants={headerVariants}
-                >
-                    Everything you need to manage tournaments with AI assistance
-                </motion.p>
+        <section className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 py-24 px-6 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0">
+                <div className="absolute top-20 left-20 w-32 h-32 bg-orange-200/20 rounded-full blur-2xl"></div>
+                <div className="absolute bottom-20 right-20 w-40 h-40 bg-amber-200/15 rounded-full blur-2xl"></div>
+                <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-yellow-200/20 rounded-full blur-xl"></div>
             </div>
             
-            <motion.div 
-                className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
-                variants={containerVariants}
-            >
-                {/* AI-Powered Management */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.robot className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">AI-Powered Management</h3>
-                    <p className="text-gray-700">Intelligent tournament organization with automated scheduling and conflict resolution.</p>
-                </motion.div>
+            <div className="max-w-6xl mx-auto relative">
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        Pourquoi Choisir <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">PétanquePro</span>
+                    </h2>
+                    <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+                        La plateforme spécialement conçue pour organiser vos tournois de pétanque sous le soleil
+                    </p>
+                </div>
                 
-                {/* Smart Planning */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.calendar className="w-8 h-8 text-white" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="text-center p-8 rounded-2xl bg-white/60 backdrop-blur-sm border border-orange-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-2">
+                        <div className="bg-gradient-to-r from-orange-400 to-red-400 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <Trophy className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-4 text-gray-900">Gestion Simplifiée</h3>
+                        <p className="text-gray-700 leading-relaxed">
+                            Organisation automatique des tableaux et suivi en temps réel des matchs de pétanque
+                        </p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">Smart Planning</h3>
-                    <p className="text-gray-700">Effortless event planning with automated bracket generation and time management.</p>
-                </motion.div>
-                
-                {/* Community Engagement */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.users className="w-8 h-8 text-white" />
+                    
+                    <div className="text-center p-8 rounded-2xl bg-white/60 backdrop-blur-sm border border-amber-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-2">
+                        <div className="bg-gradient-to-r from-amber-400 to-orange-400 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <Sun className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-4 text-gray-900">Interface Solaire</h3>
+                        <p className="text-gray-700 leading-relaxed">
+                            Design optimisé pour les tournois en extérieur, lisible même en plein soleil
+                        </p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">Community Engagement</h3>
-                    <p className="text-gray-700">Enhanced participant interaction with real-time updates and communication tools.</p>
-                </motion.div>
-                
-                {/* Tournament Tracking */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.trophy className="w-8 h-8 text-white" />
+                    
+                    <div className="text-center p-8 rounded-2xl bg-white/60 backdrop-blur-sm border border-yellow-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:transform hover:-translate-y-2">
+                        <div className="bg-gradient-to-r from-yellow-400 to-amber-400 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <Users className="w-8 h-8 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold mb-4 text-gray-900">Esprit Pétanque</h3>
+                        <p className="text-gray-700 leading-relaxed">
+                            Connectez votre club, partagez vos moments et renforcez la convivialité
+                        </p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">Tournament Tracking</h3>
-                    <p className="text-gray-700">Comprehensive results tracking with detailed analytics and performance insights.</p>
-                </motion.div>
-                
-                {/* Real-time Updates */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.zap className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">Real-time Updates</h3>
-                    <p className="text-gray-700">Instant notifications and live tournament progress for all participants.</p>
-                </motion.div>
-                
-                {/* Conflict Resolution */}
-                <motion.div 
-                    className="feature-card p-8 glass-light rounded-xl hover:shadow-xl transition-all duration-300"
-                    variants={cardVariants}
-                >
-                    <div className="feature-icon bg-blue-500/80 p-4 rounded-xl w-16 h-16 flex items-center justify-center mb-6">
-                        <Icons.shield className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-3 text-gray-900">Conflict Resolution</h3>
-                    <p className="text-gray-700">Automated dispute handling with fair and transparent resolution processes.</p>
-                </motion.div>
-            </motion.div>
-        </motion.div>
+                </div>
+            </div>
+        </section>
     );
 }

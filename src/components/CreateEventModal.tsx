@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/app/account/useUser";
 
 
@@ -94,68 +96,68 @@ export function CreateEventModal(props: { onEventCreated?: () => void }) {
             </button>
             <h2 className="text-2xl font-bold text-blue-900 mb-4 mt-2">Create a new event</h2>
             <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
-              <input
+              <Input
                 name="name"
                 placeholder="Event name"
                 value={form.name}
                 onChange={handleChange}
                 required
-                className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
+                className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
               />
-              <textarea
+              <Textarea
                 name="description"
                 placeholder="Description"
                 value={form.description}
                 onChange={handleChange}
-                className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition min-h-[80px]"
+                className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition min-h-[80px]"
               />
               <div className="flex gap-2">
                 <div className="flex flex-col w-1/2">
-                  <input
+                  <Input
                     name="applyStart"
                     type="datetime-local"
                     value={form.applyStart}
                     onChange={handleChange}
                     required
-                    className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
+                    className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
                     placeholder="Apply start"
                   />
                   <span className="text-xs text-gray-500 mt-1">When registration opens</span>
                 </div>
                 <div className="flex flex-col w-1/2">
-                  <input
+                  <Input
                     name="applyEnd"
                     type="datetime-local"
                     value={form.applyEnd}
                     onChange={handleChange}
                     required
-                    className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
+                    className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
                     placeholder="Apply end"
                   />
                   <span className="text-xs text-gray-500 mt-1">When registration closes</span>
                 </div>
               </div>
-              <input
+              <Input
                 name="tags"
                 placeholder="Tags (comma separated)"
                 value={form.tags}
                 onChange={handleChange}
-                className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
+                className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
               />
               <div className="flex flex-col">
-                <input
+                <Input
                   name="maxParticipants"
                   type="number"
                   min={1}
-                  max={user?.tokenBalance > 0 ? 100 : 10}
+                  max={user?.tokenBalance && user.tokenBalance > 0 ? 100 : 10}
                   value={form.maxParticipants}
                   onChange={handleChange}
                   required
-                  className="border border-blue-200 rounded-lg p-2 text-gray-600 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
+                  className="border border-blue-200 rounded-lg p-2 bg-white/90 focus:ring-2 focus:ring-blue-400 outline-none transition"
                   placeholder="Max participants"
                 />
                 <span className="text-xs text-gray-500 mt-1">
-                  {user?.tokenBalance > 0
+                  {user?.tokenBalance && user.tokenBalance > 0
                     ? "You can create events for up to 100 participants per token."
                     : "You can create events for up to 10 participants. Get a token for more."}
                 </span>
@@ -163,7 +165,7 @@ export function CreateEventModal(props: { onEventCreated?: () => void }) {
               {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
               <div className="flex gap-2 mt-4">
                 <div className="flex flex-col gap-2 w-full">
-                  <Button type="submit" disabled={loading} className="bg-blue-600 text-white w-full rounded-lg shadow-md hover:bg-blue-700 transition">
+                  <Button type="submit" disabled={loading} className="bg-orange-500 text-white w-full rounded-lg shadow-md hover:bg-orange-600 transition">
                     {loading ? "Creating..." : "Create Event"}
                   </Button>
                   <Button type="button" variant="outline" className="w-full rounded-lg" onClick={() => setOpen(false)}>

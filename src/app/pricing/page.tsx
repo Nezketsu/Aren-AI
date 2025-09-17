@@ -4,11 +4,11 @@ import { NavBar } from "@/components/navbar";
 
 export default function PricingPage() {
     return (
-        <div className="bg-gradient-blue min-h-screen flex flex-col">
+        <div className="min-h-screen bg-solid-cream">
             <NavBar />
-            <div className="flex-1">
+            <main className="pt-16">
                 <Pricing />
-            </div>
+            </main>
         </div>
     );
 }

@@ -21,16 +21,16 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-300 to-blue-500">
-        <div className="text-blue-900 text-lg font-semibold">Loading...</div>
+      <main className="min-h-screen flex items-center justify-center bg-solid-cream">
+        <div className="text-gray-600 text-lg">Chargement...</div>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-blue-300 to-blue-500">
-        <div className="text-blue-900 text-lg font-semibold">Not authenticated.</div>
+      <main className="min-h-screen flex items-center justify-center bg-solid-cream">
+        <div className="text-gray-600 text-lg">Veuillez vous connecter pour acc\u00e9der \u00e0 votre compte.</div>
       </main>
     );
   }
@@ -58,83 +58,116 @@ export default function AccountPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-100 via-blue-300 to-blue-500 flex items-center justify-center px-4">
-      <section
-        className="w-full max-w-md rounded-2xl glassmorphic-card shadow-xl p-8 flex flex-col items-center gap-6"
-        aria-label="Account details"
-      >
-        <div className="relative w-24 h-24 mb-2">
-          <Image
-            src={user.image || "/assets/logo.png"}
-            alt="Profile avatar"
-            fill
-            className="rounded-full border-4 border-white/40 shadow-lg object-cover"
-            priority
-          />
-        </div>
-        <h1 className="text-2xl font-bold text-blue-900 drop-shadow-sm">{user.name || user.email}</h1>
-        {!editMode ? (
-          <>
-            <p className="text-blue-900 text-center text-base">{user.email}</p>
-            <Button className="w-full mt-4" onClick={() => setEditMode(true)} aria-label="Edit Profile">
-              Edit Profile
-            </Button>
-          </>
-        ) : (
-          <>
-            <form className="w-full flex flex-col gap-4 mt-4" onSubmit={e => e.preventDefault()}>
-              {/* Email change section */}
-              <label htmlFor="email" className="text-blue-900 font-medium">Change Email</label>
-              <input
-                id="email"
-                type="email"
-                className="w-full rounded-lg border border-blue-300 bg-white/60 p-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={verifSent}
-                aria-label="New email address"
-              />
-              {!verifSent ? (
-                <Button type="button" className="w-full" onClick={handleSendVerif} aria-label="Send verification code">
-                  Send Verification Code
+    <main className="min-h-screen bg-gray-50 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-8">
+            <div className="flex items-center space-x-6 mb-8">
+              <div className="w-20 h-20 relative">
+                <Image
+                  src={user.image || "/assets/logo.png"}
+                  alt="Profile avatar"
+                  fill
+                  className="rounded-full object-cover"
+                  priority
+                />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{user.name || user.email}</h1>
+                <p className="text-gray-600">{user.email}</p>
+              </div>
+            </div>
+
+            {!editMode ? (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Account Information</h3>
+                  <dl className="space-y-3">
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Email</dt>
+                      <dd className="text-sm text-gray-900">{user.email}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Name</dt>
+                      <dd className="text-sm text-gray-900">{user.name || "Not provided"}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <Button onClick={() => setEditMode(true)}>
+                  Edit Profile
                 </Button>
-              ) : (
-                <div className="flex flex-col gap-2">
+              </div>
+            ) : (
+              <form className="space-y-6" onSubmit={e => e.preventDefault()}>
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Profile</h3>
+                </div>
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                  </label>
                   <input
-                    type="text"
-                    className="w-full rounded-lg border border-blue-300 bg-white/60 p-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    value={verifCode}
-                    onChange={e => setVerifCode(e.target.value)}
-                    placeholder="Enter verification code"
-                    aria-label="Verification code"
+                    id="email"
+                    type="email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={verifSent}
                   />
-                  <Button type="button" className="w-full" onClick={handleVerifyEmail} aria-label="Verify code">
-                    Verify & Update Email
+                  {!verifSent ? (
+                    <Button type="button" className="mt-2" onClick={handleSendVerif}>
+                      Send Verification Code
+                    </Button>
+                  ) : (
+                    <div className="mt-2 space-y-2">
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={verifCode}
+                        onChange={e => setVerifCode(e.target.value)}
+                        placeholder="Enter verification code"
+                      />
+                      <Button type="button" onClick={handleVerifyEmail}>
+                        Verify & Update Email
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value)}
+                    placeholder="Add your phone number"
+                  />
+                  <Button type="button" className="mt-2" onClick={handleSavePhone}>
+                    Save Phone Number
                   </Button>
                 </div>
-              )}
-              {/* Phone number section */}
-              <label htmlFor="phone" className="text-blue-900 font-medium mt-4">Phone Number</label>
-              <input
-                id="phone"
-                type="tel"
-                className="w-full rounded-lg border border-blue-300 bg-white/60 p-2 text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                placeholder="Add your phone number"
-                aria-label="Phone number"
-              />
-              <Button type="button" className="w-full" onClick={handleSavePhone} aria-label="Save phone number">
-                Save Phone Number
-              </Button>
-              <Button type="button" variant="secondary" className="w-full" onClick={() => setEditMode(false)} aria-label="Cancel">
-                Cancel
-              </Button>
-            </form>
-            <p className="text-blue-700 text-sm mt-2 min-h-[1.5em]">{status}</p>
-          </>
-        )}
-      </section>
+
+                <div className="flex space-x-3">
+                  <Button type="button" variant="secondary" onClick={() => setEditMode(false)}>
+                    Cancel
+                  </Button>
+                </div>
+
+                {status && (
+                  <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                    {status}
+                  </div>
+                )}
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

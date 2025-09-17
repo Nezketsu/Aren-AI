@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { withAuth } from '@/lib/auth';
 
 const prisma = new PrismaClient();
 
@@ -26,6 +27,14 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication first
+    const authCheck = await withAuth();
+    if (authCheck instanceof NextResponse) {
+      return authCheck;
+    }
+    
+    const { user } = authCheck;
+    
     const { 
       name, 
       description, 
@@ -40,15 +49,43 @@ export async function POST(req: NextRequest) {
       mode,
       rules,
       requirements,
-      ownerId,
       applyStart
     } = await req.json();
-    if (!ownerId) {
-      return NextResponse.json({ error: "Missing ownerId (user not authenticated)" }, { status: 400 });
+    
+    // Comprehensive input validation
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json({ error: "Event name is required" }, { status: 400 });
+    }
+    if (name.trim().length > 100) {
+      return NextResponse.json({ error: "Event name must be less than 100 characters" }, { status: 400 });
+    }
+    if (description && typeof description === 'string' && description.length > 1000) {
+      return NextResponse.json({ error: "Description must be less than 1000 characters" }, { status: 400 });
+    }
+    
+    // Date validation
+    if (!applyStart || !applyEnd) {
+      return NextResponse.json({ error: "Registration start and end dates are required" }, { status: 400 });
+    }
+    
+  const regStart = new Date(applyStart);
+  const regEnd = new Date(applyEnd);
+  const now = new Date();
+    
+  if (isNaN(regStart.getTime()) || isNaN(regEnd.getTime())) {
+      return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+    }
+    
+  if (regEnd <= regStart) {
+      return NextResponse.json({ error: "Registration end must be after start date" }, { status: 400 });
+    }
+    
+  if (regEnd <= now) {
+      return NextResponse.json({ error: "Registration end must be in the future" }, { status: 400 });
     }
     // Fetch user token balance
-    const user = await prisma.user.findUnique({ where: { id: ownerId } });
-    const tokenBalance = user?.tokenBalance ?? 0;
+    const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+    const tokenBalance = dbUser?.tokenBalance ?? 0;
         const maxAllowed = 20;
     if (!maxParticipants || maxParticipants < 1 || maxParticipants > maxAllowed) {
       return NextResponse.json({ error: tokenBalance > 0
@@ -61,18 +98,18 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Insufficient token balance." }, { status: 400 });
       }
       await prisma.user.update({
-        where: { id: ownerId },
+        where: { id: user.id },
         data: { tokenBalance: { decrement: 1 } },
       });
     }
     // Create event
     const event = await prisma.event.create({
       data: {
-        name,
-        description,
-        ownerId,
-        applyStart: new Date(applyStart),
-        applyEnd: new Date(applyEnd),
+        name: name.trim(),
+        description: description?.trim() || null,
+        ownerId: user.id,
+  applyStart: regStart,
+  applyEnd: regEnd,
         maxParticipants,
         // tags: tagsArray, // Uncomment if Event model supports tags as a field
         registrationClosed: false, // Add this field if your schema supports it

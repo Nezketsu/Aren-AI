@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma, withEventOwnership } from "@/lib/auth";
+import { checkRateLimit, getRateLimitResponse } from "@/lib/rateLimit";
 
 // Helper to generate a simple single-elimination bracket
 type BracketNode = {
@@ -21,6 +20,34 @@ type BracketRound = {
   roundName: string;
   matches: BracketNode[];
 };
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } | Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await Promise.resolve(params);
+    const { id } = resolvedParams;
+    
+    // Rate limiting for bracket GET requests
+    const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitKey = `bracket-get-${id}-${clientIp}`;
+    if (!checkRateLimit(rateLimitKey, 20, 60000)) { // 20 requests per minute
+      return getRateLimitResponse();
+    }
+    const event = await prisma.event.findUnique({ where: { id } });
+    if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (!event.bracketState) {
+      return NextResponse.json({ bracket: [] });
+    }
+    const existingBracket = Array.isArray(event.bracketState) 
+      ? event.bracketState 
+      : JSON.parse(JSON.stringify(event.bracketState));
+    return NextResponse.json({ bracket: existingBracket });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch bracket' }, { status: 500 });
+  }
+}
 
 function generateBracket(participants: { userId: string; user?: { id?: string; name?: string | null; image?: string | null } | null }[]): BracketRound[] {
   try {
@@ -167,7 +194,191 @@ function generateAdaptiveBracket(players: any[]): BracketRound[] {
   }
   
   console.log(`Generated ${rounds.length} rounds for adaptive tournament`);
+  
+  // Process automatic progression for bye matches
+  processAutomaticProgression(rounds);
+  
   return rounds;
+}
+
+function processAutomaticProgression(rounds: BracketRound[]) {
+  // Traiter chaque round en commençant par le premier
+  for (let roundIndex = 0; roundIndex < rounds.length - 1; roundIndex++) {
+    const currentRound = rounds[roundIndex];
+    const nextRound = rounds[roundIndex + 1];
+    
+    // Trouver tous les matchs terminés dans le round actuel
+    const completedMatches = currentRound.matches.filter(match => 
+      match.status === 'completed' && match.winner
+    );
+    
+    // Traiter chaque match terminé
+    completedMatches.forEach(match => {
+      advanceWinnerToNextRound(match, nextRound, rounds, roundIndex + 1);
+    });
+  }
+  
+  // Processus récursif pour gérer les byes créés dynamiquement
+  processGeneratedByes(rounds);
+}
+
+function advanceWinnerToNextRound(completedMatch: any, nextRound: BracketRound, allRounds: BracketRound[], nextRoundIndex: number) {
+  // Trouver les matchs du prochain round alimentés par ce match
+  for (let nextMatch of nextRound.matches) {
+    if (nextMatch.sourceMatchIds?.includes(completedMatch.id)) {
+      const sourceMatchIndex = nextMatch.sourceMatchIds.indexOf(completedMatch.id);
+      
+      if (sourceMatchIndex !== -1) {
+        // Trouver le participant gagnant
+        const winningParticipant = completedMatch.participants?.find((p: any) => 
+          p && (p.id === completedMatch.winner || p.user?.id === completedMatch.winner)
+        );
+        
+        if (winningParticipant) {
+          // Initialiser les participants si nécessaire
+          if (!nextMatch.participants) {
+            nextMatch.participants = [
+              { id: 'TBD', name: 'TBD' },
+              { id: 'TBD', name: 'TBD' }
+            ];
+          }
+          
+          // Placer le gagnant dans le bon slot
+          nextMatch.participants[sourceMatchIndex] = {
+            id: winningParticipant.id || winningParticipant.user?.id,
+            name: winningParticipant.name || winningParticipant.user?.name,
+            profilePic: winningParticipant.profilePic || winningParticipant.user?.profilePic,
+            user: winningParticipant.user
+          };
+          
+          // Vérifier l'état du match après l'ajout
+          updateMatchStatus(nextMatch);
+          
+          // Si le match devient un bye, le traiter récursivement
+          if (nextMatch.status === 'completed' && nextMatch.winner) {
+            if (nextRoundIndex < allRounds.length - 1) {
+              advanceWinnerToNextRound(nextMatch, allRounds[nextRoundIndex + 1], allRounds, nextRoundIndex + 1);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+function updateMatchStatus(match: any) {
+  const participant1 = match.participants[0];
+  const participant2 = match.participants[1];
+  
+  if (participant1?.id !== 'TBD' && participant2?.id !== 'TBD') {
+    // Deux participants - match prêt
+    match.name = `${participant1.name} vs ${participant2.name}`;
+    match.status = 'ready';
+  } else if (participant1?.id !== 'TBD' && participant2?.id === 'TBD') {
+    // Premier participant seulement - en attente de l'adversaire
+    match.name = `${participant1.name} vs TBD`;
+    match.status = 'waiting';
+  } else if (participant1?.id === 'TBD' && participant2?.id !== 'TBD') {
+    // Deuxième participant seulement - en attente de l'adversaire
+    match.name = `TBD vs ${participant2.name}`;
+    match.status = 'waiting';
+  } else {
+    // Aucun participant - en attente
+    match.name = 'TBD vs TBD';
+    match.status = 'waiting';
+  }
+}
+
+function checkAndCreateBye(match: any, participant: any) {
+  // Vérifier si tous les matchs sources sont terminés
+  const allSourcesCompleted = match.sourceMatchIds?.every((sourceId: string) => {
+    // Chercher le match source dans tous les rounds
+    for (let round of match.allRounds || []) {
+      const sourceMatch = round.matches?.find((m: any) => m.id === sourceId);
+      if (sourceMatch) {
+        return sourceMatch.status === 'completed';
+      }
+    }
+    return false;
+  });
+  
+  if (allSourcesCompleted) {
+    // Tous les matchs sources sont terminés, créer un bye
+    match.participants = [participant];
+    match.name = `${participant.name} (Bye)`;
+    match.status = 'completed';
+    match.winner = participant.id || participant.user?.id;
+  } else {
+    // En attente d'autres matchs
+    match.name = `${participant.name} vs TBD`;
+    match.status = 'waiting';
+  }
+}
+
+function processGeneratedByes(rounds: BracketRound[]) {
+  // Ne traiter que les vrais byes du premier round, pas les attentes d'adversaires
+  let hasChanges = true;
+  let iterations = 0;
+  const maxIterations = 10; // Sécurité contre les boucles infinies
+  
+  while (hasChanges && iterations < maxIterations) {
+    hasChanges = false;
+    iterations++;
+    
+    for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
+      const round = rounds[roundIndex];
+      const previousRound = rounds[roundIndex - 1];
+      
+      round.matches.forEach(match => {
+        if (match.status === 'waiting' && match.participants) {
+          const participant1 = match.participants[0];
+          const participant2 = match.participants[1];
+          
+          // Vérifier si c'est un vrai bye (pas juste une attente)
+          if ((participant1?.id !== 'TBD' && participant2?.id === 'TBD') ||
+              (participant1?.id === 'TBD' && participant2?.id !== 'TBD')) {
+            
+            // Vérifier si tous les matchs sources sont terminés
+            const allSourcesCompleted = match.sourceMatchIds?.every((sourceId: string) => 
+              previousRound.matches.find(m => m.id === sourceId)?.status === 'completed'
+            );
+            
+            if (allSourcesCompleted) {
+              // Vérifier si c'est vraiment un bye et non une attente
+              const sourceMatches = match.sourceMatchIds?.map((sourceId: string) => 
+                previousRound.matches.find(m => m.id === sourceId)
+              ).filter(Boolean);
+              
+              // C'est un vrai bye seulement si un des matchs sources était déjà un bye
+              const hasSourceBye = sourceMatches?.some(sourceMatch => 
+                sourceMatch.participants?.length === 1 || 
+                sourceMatch.name?.includes('Bye') || 
+                sourceMatch.name?.includes('Auto-Advance')
+              );
+              
+              if (hasSourceBye) {
+                const advancingParticipant = participant1?.id !== 'TBD' ? participant1 : participant2;
+                
+                // Convertir en bye automatique
+                match.participants = [advancingParticipant];
+                match.name = `${advancingParticipant.name} (Bye)`;
+                match.status = 'completed';
+                match.winner = advancingParticipant.id || advancingParticipant.user?.id;
+                
+                hasChanges = true;
+                
+                // Propager ce bye au round suivant si possible
+                if (roundIndex < rounds.length - 1) {
+                  advanceWinnerToNextRound(match, rounds[roundIndex + 1], rounds, roundIndex + 1);
+                }
+              }
+              // Sinon, laisser en attente - c'est normal d'attendre l'adversaire
+            }
+          }
+        }
+      });
+    }
+  }
 }
 
 function calculateRoundsStructure(playerCount: number) {
@@ -219,6 +430,17 @@ export async function POST(
     // Handle async params for Next.js 15+
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
+    
+    // Rate limiting for bracket POST requests (more restrictive)
+    const clientIp = request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimitKey = `bracket-post-${id}-${clientIp}`;
+    if (!checkRateLimit(rateLimitKey, 5, 60000)) { // 5 requests per minute
+      return getRateLimitResponse();
+    }
+    
+  // Owner-only action
+  const ownership = await withEventOwnership(id);
+  if (ownership instanceof NextResponse) return ownership;
     
     console.log("Fetching event with ID:", id);
     
@@ -284,7 +506,7 @@ export async function POST(
     
     console.log("Bracket generated with", bracket.length, "rounds");
     
-    // Save bracket to database
+  // Save bracket to database
     try {
       await prisma.event.update({
         where: { id },
@@ -330,8 +552,5 @@ export async function POST(
       error: "Failed to create bracket",
       details: error instanceof Error ? error.message : "Unknown error"
     }, { status: 500 });
-  } finally {
-    // Ensure Prisma client is properly disconnected
-    await prisma.$disconnect();
   }
 }

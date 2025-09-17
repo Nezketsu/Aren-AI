@@ -3,23 +3,26 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// Robust avatar component with fallback on error
+// Clean avatar component with fallback
 function ProfileAvatar({ user, size = 36 }: { user: any, size?: number }) {
   const [imgError, setImgError] = useState(false);
+  
   const fallback = (
-    <span
-      className="rounded-full bg-gray-300 flex items-center justify-center text-white text-lg font-bold"
-      style={{ width: size, height: size }}
+    <div
+      className="rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium"
+      style={{ width: size, height: size, fontSize: size * 0.4 }}
     >
-      {user?.name?.charAt(0) || user?.email?.charAt(0) || "?"}
-    </span>
+      {user?.name?.charAt(0) || user?.email?.charAt(0) || "U"}
+    </div>
   );
+  
   if (!user?.image || imgError) return fallback;
+  
   return (
     <img
       src={user.image}
       alt="Profile"
-      className="rounded-full object-cover"
+      className="rounded-full object-cover border border-gray-200"
       style={{ width: size, height: size }}
       onError={() => setImgError(true)}
       referrerPolicy="no-referrer"
@@ -35,31 +38,28 @@ export function ProfileDropdown({ session, signOut }: { session: any, signOut: (
   useEffect(() => {
     if (open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      const minWidth = 260;
-      const maxWidth = 340;
-      // Center the dropdown below the button, using actual dropdown width if possible
-      let left = rect.left + rect.width / 2 - minWidth / 2;
-      // Clamp dropdown to viewport
-      if (left + minWidth > window.innerWidth - 8) {
-        left = window.innerWidth - minWidth - 8;
+      const dropdownWidth = 240;
+      let left = rect.left + rect.width / 2 - dropdownWidth / 2;
+      
+      // Keep dropdown within viewport
+      if (left + dropdownWidth > window.innerWidth - 16) {
+        left = window.innerWidth - dropdownWidth - 16;
       }
-      if (left < 8) left = 8;
+      if (left < 16) left = 16;
+      
       setDropdownStyle({
         position: "fixed",
-        top: rect.bottom + 10,
+        top: rect.bottom + 8,
         left,
-        minWidth,
-        maxWidth,
-        zIndex: 9999,
-        transform: `translateX(0)` // ensure no accidental offset
+        width: dropdownWidth,
+        zIndex: 50
       });
     }
   }, [open]);
 
   useEffect(() => {
-    function onClick(e: MouseEvent) {
+    function handleClick(e: MouseEvent) {
       if (!btnRef.current) return;
-      // Only close if click is outside both button and dropdown
       const dropdown = document.getElementById("profile-dropdown-menu");
       if (
         !btnRef.current.contains(e.target as Node) &&
@@ -68,58 +68,89 @@ export function ProfileDropdown({ session, signOut }: { session: any, signOut: (
         setOpen(false);
       }
     }
+    
     if (open) {
-      window.addEventListener("mousedown", onClick);
-    } else {
-      window.removeEventListener("mousedown", onClick);
+      window.addEventListener("mousedown", handleClick);
+      return () => window.removeEventListener("mousedown", handleClick);
     }
-    return () => window.removeEventListener("mousedown", onClick);
   }, [open]);
 
   return (
     <>
       <button
         ref={btnRef}
-        className="bg-white/20 border border-white/40 rounded-full w-10 h-10 flex items-center justify-center overflow-hidden shadow hover:shadow-lg transition-all focus:outline-none"
-        title="Profile"
-        onClick={() => setOpen((v) => !v)}
+        className="rounded-full hover:ring-2 hover:ring-orange-400 hover:ring-opacity-20 transition-all focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-opacity-50"
+        onClick={() => setOpen(prev => !prev)}
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <ProfileAvatar user={session.user} size={36} />
+        <ProfileAvatar user={session.user} size={32} />
       </button>
+      
       {open && typeof window !== 'undefined' && createPortal(
         <div
           id="profile-dropdown-menu"
           style={dropdownStyle}
-          className="py-4 my-3 px-5 flex flex-col gap-2 text-gray-900 rounded-2xl border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-[9999] animate-fadeIn max-w-[340px] overflow-x-auto backdrop-blur-md bg-white/15 relative tracking-wide"
-          tabIndex={-1}
+          className="bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-orange-100 py-2"
         >
-          {/* Glassmorphism gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-30 pointer-events-none rounded-2xl" />
-          <div className="relative z-10 flex items-center gap-3 mb-2 tracking-wider">
-            <ProfileAvatar user={session?.user} size={32} />
-            <span className="font-medium text-sm text-white">{session?.user?.name || session?.user?.email}</span>
+          {/* User Info */}
+          <div className="px-4 py-3 border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              <ProfileAvatar user={session?.user} size={40} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {session?.user?.name || 'User'}
+                </p>
+                <p className="text-sm text-gray-500 truncate">
+                  {session?.user?.email}
+                </p>
+              </div>
+            </div>
           </div>
-          <Link href="/account" className="relative z-10 text-base md:text-sm font-medium text-white py-2 px-2 rounded hover:bg-white/20 transition-colors tracking-wider ">Account Settings</Link>
-          <Link href="/events/mine" className="relative z-10 text-base md:text-sm font-medium text-white py-2 px-2 rounded hover:bg-white/20 transition-colors tracking-wider ">My Events</Link>
-          <Link href="/notifications" className="relative z-10 text-base md:text-sm font-medium text-white py-2 px-2 rounded hover:bg-white/20 transition-colors tracking-wider ">Notifications</Link>
-          {/* DEV ONLY: Add Token Button */}
-          <Button
-            onClick={async () => {
-              await fetch("/api/account/add-token", { method: "POST" });
-              window.location.reload();
-            }}
-            className="relative z-10 w-full font-bold text-base md:text-sm bg-green-600 text-white border-none shadow hover:bg-green-700 hover:shadow-lg transition-all duration-200 py-2 rounded-xl tracking-wider focus:outline-none focus:ring-2 focus:ring-green-300"
-          >
-            Add Token (DEV)
-          </Button>
-          <Button
-            onClick={() => signOut()}
-            className="relative z-10 mt-2 w-full font-bold text-base md:text-sm bg-white/20 text-white border-none shadow hover:bg-white/30 hover:shadow-lg transition-all duration-200 py-2 rounded-xl tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-300"
-          >
-            Log Out
-          </Button>
+
+          {/* Menu Items */}
+          <div className="py-1">
+            <Link 
+              href="/account" 
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              Paramètres du Compte
+            </Link>
+            <Link 
+              href="/events/mine" 
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              Mes Tournois
+            </Link>
+          </div>
+
+          {/* Dev Controls (if applicable) */}
+          <div className="border-t border-gray-100 py-1">
+            <button
+              onClick={async () => {
+                await fetch("/api/account/add-token", { method: "POST" });
+                window.location.reload();
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 transition-colors"
+            >
+              Add Token (DEV)
+            </button>
+          </div>
+
+          {/* Sign Out */}
+          <div className="border-t border-gray-100 py-1">
+            <button
+              onClick={() => {
+                setOpen(false);
+                signOut();
+              }}
+              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Déconnexion
+            </button>
+          </div>
         </div>,
         document.body
       )}

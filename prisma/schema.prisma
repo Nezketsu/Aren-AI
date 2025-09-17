@@ -69,6 +69,7 @@ model Event {
   ownerId      String
   owner        User          @relation(fields: [ownerId], references: [id])
   participants Participant[]
+  disputes     MatchDispute[]
   createdAt    DateTime      @default(now())
   applyStart   DateTime
   applyEnd     DateTime
@@ -85,6 +86,35 @@ model Participant {
   event    Event    @relation(fields: [eventId], references: [id])
   joinedAt DateTime @default(now())
   // Add more fields as needed (e.g., teamName, status, etc)
+  matchScores MatchScore[]
 
   @@unique([eventId, userId])
+}
+
+model MatchScore {
+  id            String      @id @default(cuid())
+  matchId       String
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id])
+  myScore       Int
+  opponentScore Int
+  submittedAt   DateTime    @default(now())
+
+  @@unique([matchId, participantId])
+}
+
+model MatchDispute {
+  id          String   @id @default(cuid())
+  matchId     String
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  participant1Id String
+  participant2Id String
+  participant1Score String // Format: "myScore-opponentScore"
+  participant2Score String // Format: "myScore-opponentScore"
+  status      String   @default("pending") // pending, resolved
+  resolvedBy  String?
+  finalScore  String? // Final score decided by owner
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
 }

@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { prisma, withEventOwnership } from "@/lib/auth";
 
 // POST /api/events/[id]/auto-apply-all
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   // Support Next.js dynamic API params extraction (async)
   const { id: eventId } = await params;
+  const ownership = await withEventOwnership(eventId);
+  if (ownership instanceof NextResponse) return ownership;
   try {
     // Récupère tous les utilisateurs
     const users = await prisma.user.findMany();

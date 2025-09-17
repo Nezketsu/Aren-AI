@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { NavBar } from "@/components/navbar";
 import { useUser } from "@/app/account/useUser";
 
@@ -50,7 +51,6 @@ const EventPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-
   // Apply logic
   const [applyLoading, setApplyLoading] = useState<string | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
@@ -82,23 +82,38 @@ const EventPage: React.FC = () => {
   return (
     <>
       <NavBar />
-      <main className="event-page min-h-screen bg-gradient-blue px-4 flex items-center justify-center pt-32">
-        <div className="flex flex-col items-center w-full">
-          <header className="mb-10 text-center">
-            <h1 className="text-3xl md:text-5xl font-extrabold text-blue-700 mb-2 drop-shadow-sm">TournaMind Event Dashboard</h1>
-            <p className="text-lg md:text-xl text-blue-500 font-medium">AI-Powered Tournament OS for Real-World Events</p>
+      <main className="min-h-screen bg-solid-cream pt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <header className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Tournois de <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">Pétanque</span></h1>
+            <p className="text-lg text-gray-700 mb-6">Trouvez et rejoignez les prochains tournois de pétanque</p>
+            
+            {user && (
+              <div className="flex justify-center">
+                <Link
+                  href="/events/create"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Créer un Tournoi
+                </Link>
+              </div>
+            )}
           </header>
 
-          <section className="w-full bg-white/80 rounded-xl shadow-lg p-6 mb-8">
-            <h2 className="text-xl font-bold text-blue-700 mb-4">Current Events</h2>
+          <section className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-orange-100">
             {loading ? (
-              <div className="text-blue-500">Loading events...</div>
+              <div className="p-8 text-center text-gray-600">Chargement des tournois...</div>
             ) : error ? (
-              <div className="text-red-500">{error}</div>
+              <div className="p-8 text-center text-red-500">{error}</div>
             ) : events.length === 0 ? (
-              <div className="text-blue-400">No events found.</div>
+              <div className="p-8 text-center text-gray-600">Aucun tournoi trouvé.</div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full">
+              <div className="p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Tournois Disponibles</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {events.map((event) => {
                   const now = new Date();
                   const applyStart = new Date(event.applyStart);
@@ -110,91 +125,90 @@ const EventPage: React.FC = () => {
                   return (
                     <div
                       key={event.id}
-                      className="feature-card p-5 bg-gray-50 border border-gray-100 shadow-sm rounded-xl hover:shadow-md transition-all flex flex-col gap-4 relative items-center min-h-[200px] w-full cursor-pointer"
-                      style={{ minWidth: 0 }}
+                      className="bg-white/70 backdrop-blur-sm border border-orange-100 rounded-2xl p-6 hover:shadow-xl hover:bg-white/90 transition-all duration-300 cursor-pointer hover:transform hover:-translate-y-1"
                       onClick={e => {
-                        // Prevent navigation if clicking on a button inside the card
                         if ((e.target as HTMLElement).tagName === 'BUTTON') return;
                         window.location.href = `/events/${event.id}`;
                       }}
                     >
-                      <div className="feature-icon bg-blue-500/80 p-3 rounded-xl w-12 h-12 flex items-center justify-center mb-2">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4-4v4m8-16v2a4 4 0 01-4 4H6a4 4 0 01-4-4V5m16 0V3a1 1 0 00-1-1H5a1 1 0 00-1 1v2m16 0a2 2 0 01-2 2m2-2a2 2 0 00-2-2" /></svg>
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900">{event.name}</h3>
                       </div>
-                      <div className="flex items-center gap-2 w-full justify-center">
-                        <div className="font-bold text-blue-700 text-2xl text-center flex-1">{event.name}</div>
-                      </div>
+                      
                       {event.description && (
-                        <div className="text-blue-600 text-lg text-center mb-1 w-full">{event.description}</div>
+                        <p className="text-gray-600 mb-4">{event.description}</p>
                       )}
-                      <div className="text-sm text-blue-500 text-center w-full">
-                        Registration: {new Date(event.applyStart).toLocaleString()}<br/>-<br/>{new Date(event.applyEnd).toLocaleString()}
+                      
+                      <div className="space-y-2 text-sm text-gray-500 mb-4">
+                        <div>Inscription: {new Date(event.applyStart).toLocaleDateString()} - {new Date(event.applyEnd).toLocaleDateString()}</div>
+                        <div>Participants: {event.participants.length}{event.maxParticipants ? `/${event.maxParticipants}` : ''}</div>
                       </div>
-                      <div className="text-xs text-gray-400 mt-2 text-center w-full">Created: {new Date(event.createdAt).toLocaleString()}</div>
-                      {/* Apply button logic restored */}
-                      {(!registrationOpen || maxReached) ? (
-                        <div className="mt-4 px-6 py-2 rounded-lg bg-gray-300 text-gray-500 font-semibold text-base cursor-not-allowed select-none">
-                          Registration closed
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            className="mt-4 px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition disabled:opacity-60 disabled:cursor-not-allowed text-base"
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleApply(event.id);
-                            }}
-                            disabled={Boolean(applyLoading === event.id || appliedEventIds.has(event.id) || alreadyParticipant)}
-                          >
-                            {alreadyParticipant
-                              ? "Applied"
-                              : appliedEventIds.has(event.id)
-                              ? "Applied"
-                              : applyLoading === event.id
-                              ? "Applying..."
-                              : "Apply"}
-                          </button>
-                          {isOwner && (
+                      <div className="flex flex-col gap-2">
+                        {(!registrationOpen || maxReached) ? (
+                          <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-500 font-medium text-center">
+                            Inscriptions Fermées
+                          </div>
+                        ) : (
+                          <>
                             <button
-                              className="mt-2 px-4 py-1 rounded-lg bg-red-600 text-white font-semibold shadow hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-                              onClick={async e => {
+                              className="px-4 py-2 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              onClick={e => {
                                 e.stopPropagation();
-                                setCloseLoading(event.id);
-                                try {
-                                  const res = await fetch(`/api/events/${event.id}/close-apply`, { method: 'POST' });
-                                  if (!res.ok) throw new Error('Failed to close registration');
-                                  // Refetch events to update UI
-                                  const updated = await res.json();
-                                  setEvents(prev => prev.map(e => e.id === event.id ? { ...e, applyEnd: updated.applyEnd } : e));
-                                } catch {
-                                  alert('Failed to close registration');
-                                } finally {
-                                  setCloseLoading(null);
-                                }
+                                handleApply(event.id);
                               }}
-                              disabled={closeLoading === event.id}
+                              disabled={Boolean(applyLoading === event.id || appliedEventIds.has(event.id) || alreadyParticipant)}
                             >
-                              {closeLoading === event.id ? 'Closing...' : 'Close Registration'}
+                              {alreadyParticipant
+                                ? "Inscrit"
+                                : appliedEventIds.has(event.id)
+                                ? "Inscrit"
+                                : applyLoading === event.id
+                                ? "Inscription..."
+                                : "S'inscrire"}
                             </button>
-                          )}
-                          {applyError && applyLoading === null && !appliedEventIds.has(event.id) && !alreadyParticipant && (
-                            <div className="text-red-500 text-xs mt-1">{applyError}</div>
-                          )}
-                        </>
-                      )}
-                      <div className="mt-2 px-6 py-2 rounded-lg bg-blue-100 text-blue-700 font-semibold text-base select-none text-center">View Details</div>
+                            {isOwner && (
+                              <button
+                                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                                onClick={async e => {
+                                  e.stopPropagation();
+                                  setCloseLoading(event.id);
+                                  try {
+                                    const res = await fetch(`/api/events/${event.id}/close-apply`, { method: 'POST' });
+                                    if (!res.ok) throw new Error('Failed to close registration');
+                                    const updated = await res.json();
+                                    setEvents(prev => prev.map(e => e.id === event.id ? { ...e, applyEnd: updated.applyEnd } : e));
+                                  } catch {
+                                    alert('Failed to close registration');
+                                  } finally {
+                                    setCloseLoading(null);
+                                  }
+                                }}
+                                disabled={closeLoading === event.id}
+                              >
+                                {closeLoading === event.id ? 'Fermeture...' : 'Fermer Inscriptions'}
+                              </button>
+                            )}
+                          </>
+                        )}
+                        <Link
+                          href={`/events/${event.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-4 py-2 rounded-lg border border-orange-500 text-orange-600 font-medium hover:bg-orange-50 transition-colors text-center"
+                          aria-label={`Voir les détails de ${event.name}`}
+                        >
+                          Voir Détails
+                        </Link>
+                        {applyError && applyLoading === null && !appliedEventIds.has(event.id) && !alreadyParticipant && (
+                          <div className="text-red-500 text-sm mt-2">{applyError}</div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
+                </div>
               </div>
             )}
           </section>
-
-          <footer className="text-center text-sm text-blue-500 py-4">
-            <small className="block">
-              Accessible on low-end devices &middot; Works offline &middot; Community-first
-            </small>
-          </footer>
         </div>
       </main>
     </>
