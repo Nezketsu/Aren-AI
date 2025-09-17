@@ -3,8 +3,19 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+interface User {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface Session {
+  user?: User;
+}
+
 // Clean avatar component with fallback
-function ProfileAvatar({ user, size = 36 }: { user: any, size?: number }) {
+function ProfileAvatar({ user, size = 36 }: { user?: User, size?: number }) {
   const [imgError, setImgError] = useState(false);
   
   const fallback = (
@@ -30,10 +41,10 @@ function ProfileAvatar({ user, size = 36 }: { user: any, size?: number }) {
   );
 }
 
-export function ProfileDropdown({ session, signOut }: { session: any, signOut: () => void }) {
+export function ProfileDropdown({ session, signOut }: { session?: Session, signOut: () => void }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<any>({});
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     if (open && btnRef.current) {

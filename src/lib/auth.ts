@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Event, User, Participant } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+type EventWithDetails = Event & {
+  owner: User;
+  participants: (Participant & {
+    user: User;
+  })[];
+};
 
 /**
  * Type for authenticated user session
@@ -94,9 +101,9 @@ export async function isOwner(resourceOwnerId: string, userId?: string): Promise
 /**
  * Middleware to check if user is authenticated and owns a specific event
  * @param eventId - The ID of the event to check ownership for
- * @returns Promise<{ user: AuthenticatedUser; event: any } | NextResponse>
+ * @returns Promise<{ user: AuthenticatedUser; event: EventWithDetails } | NextResponse>
  */
-export async function withEventOwnership(eventId: string): Promise<{ user: AuthenticatedUser; event: any } | NextResponse> {
+export async function withEventOwnership(eventId: string): Promise<{ user: AuthenticatedUser; event: EventWithDetails } | NextResponse> {
   // First check authentication
   const authCheck = await withAuth();
   if (authCheck instanceof NextResponse) {
@@ -169,7 +176,7 @@ export function withAuthHandler<T extends any[]>(
  * @returns Wrapped handler with authentication and ownership check
  */
 export function withEventOwnershipHandler<T extends any[]>(
-  handler: (user: AuthenticatedUser, event: any, ...args: T) => Promise<NextResponse>,
+  handler: (user: AuthenticatedUser, event: EventWithDetails, ...args: T) => Promise<NextResponse>,
   getEventId: (...args: T) => string
 ) {
   return async (...args: T): Promise<NextResponse> => {

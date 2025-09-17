@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     include: { event: true },
   });
   // Return just the event objects
-  return NextResponse.json(participants.map((p: any) => p.event));
+  return NextResponse.json(participants.map((p) => p.event));
 }
 
 export async function POST(req: NextRequest) {

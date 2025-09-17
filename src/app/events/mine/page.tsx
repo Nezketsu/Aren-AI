@@ -27,7 +27,7 @@ export default function MyEventsPage() {
         const createdEventsArray = Array.isArray(created) ? created : [];
         setCreatedEvents(createdEventsArray);
         // Remove duplicates: don't show events the user created in both lists
-        setParticipatedEvents(Array.isArray(participated) ? participated.filter((e: any) => e.ownerId !== user.id) : []);
+        setParticipatedEvents(Array.isArray(participated) ? participated.filter((e: { ownerId: string }) => e.ownerId !== user.id) : []);
         
         // Check bracket status for each created event
         const bracketStatuses: {[key: string]: boolean} = {};

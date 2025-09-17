@@ -6,6 +6,24 @@ import BracketFlow from "@/components/BracketFlow";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast, toastHelpers } from "@/components/ui/toast";
 
+interface Event {
+  id: string;
+  title: string;
+  description?: string;
+  applyStart: string;
+  applyEnd: string;
+  maxParticipants?: number;
+  participants?: Array<{
+    id: string;
+    userId: string;
+    user: {
+      name?: string;
+      email?: string;
+    };
+  }>;
+  ownerId: string;
+}
+
 // A simplified version of the AutoApplyAllUsers component for brevity
 type AutoApplyAllUsersProps = { eventId: string; onApplied: () => void };
 const AutoApplyAllUsers: React.FC<AutoApplyAllUsersProps> = ({ eventId, onApplied }) => {
@@ -22,7 +40,7 @@ const AutoApplyAllUsers: React.FC<AutoApplyAllUsersProps> = ({ eventId, onApplie
             if (!res.ok) throw new Error("Erreur lors de l'auto-apply");
             setSuccess(true);
             onApplied();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Erreur inconnue");
         } finally {
             setLoading(false);
@@ -78,7 +96,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                 if (data) {
                     checkBracketExists();
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : "Failed to fetch event");
             } finally {
                 setLoading(false);
@@ -116,7 +134,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
             
             // Refresh the page to show the bracket
             window.location.reload();
-        } catch (error: any) {
+        } catch (error: unknown) {
             toastHelpers.bracketError(toast, error.message);
         } finally {
             setBracketLoading(false);
@@ -124,7 +142,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
     };
 
     // Disputes state
-    const [disputes, setDisputes] = useState<any[]>([]);
+    const [disputes, setDisputes] = useState<Array<{ id: string; matchId: string; reason: string; reporterId: string; createdAt: string; }>>([]);
     const [disputesLoading, setDisputesLoading] = useState(false);
     
     // Check if registration is closed
@@ -303,7 +321,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                 🚨 Litiges à résoudre ({disputes.length})
                             </h3>
                             <div className="space-y-4">
-                                {disputes.map((dispute: any) => (
+                                {disputes.map((dispute) => (
                                     <div key={dispute.id} className="border border-yellow-300 bg-yellow-50 rounded-lg p-4">
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
@@ -418,7 +436,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                 {user && !isOwner && (
                                     <div className="mb-4">
                                         {(() => {
-                                            const alreadyIn = event.participants?.some((p: any) => p.userId === user.id);
+                                            const alreadyIn = event.participants?.some((p) => p.userId === user.id);
                                             const now = new Date();
                                             const open = now >= new Date(event.applyStart) && now <= new Date(event.applyEnd);
                                             const full = typeof event.maxParticipants === 'number' && (event.participants?.length ?? 0) >= event.maxParticipants;
@@ -435,8 +453,8 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                                                 const d = await res.json();
                                                                 if (!res.ok) throw new Error(d.error || 'Withdraw failed');
                                                                 handleAutoApplyRefresh();
-                                                            } catch (e: any) {
-                                                                toast.error('Erreur de désinscription', e.message);
+                                                            } catch (e: unknown) {
+                                                                toast.error('Erreur de désinscription', e instanceof Error ? e.message : 'Erreur inconnue');
                                                             }
                                                         }}
                                                     >
@@ -454,8 +472,8 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                                             const d = await res.json();
                                                             if (!res.ok) throw new Error(d.error || 'Join failed');
                                                             handleAutoApplyRefresh();
-                                                        } catch (e: any) {
-                                                            toast.error('Erreur d&apos;inscription', e.message);
+                                                        } catch (e: unknown) {
+                                                            toast.error('Erreur d&apos;inscription', e instanceof Error ? e.message : 'Erreur inconnue');
                                                         }
                                                     }}
                                                 >
@@ -468,7 +486,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                 {event.participants && event.participants.length > 0 ? (
                                     <div className="participants-list max-h-[150px] overflow-y-auto scrollbar-hide" role="list" aria-label="Liste des participants">
                                         <div className="space-y-2 px-1 py-1">
-                                            {event.participants.map((participant: any, index: number) => (
+                                            {event.participants.map((participant, index: number) => (
                                                 <div 
                                                     key={participant.userId || index} 
                                                     className="participant-item flex items-center justify-between p-2 rounded-md hover:bg-gray-50 transition-colors border border-gray-100 shadow-sm"
