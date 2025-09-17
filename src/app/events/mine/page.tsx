@@ -121,7 +121,7 @@ export default function MyEventsPage() {
                               onClick={async () => {
                                 const confirmed = await confirm({
                                   title: 'Supprimer l\'événement',
-                                  message: `Êtes-vous sûr de vouloir supprimer l'événement "${event.name}" ? Cette action ne peut pas être annulée et supprimera tous les participants et résultats.`,
+                                  message: `Êtes-vous sûr de vouloir supprimer l&apos;événement "${event.name}" ? Cette action ne peut pas être annulée et supprimera tous les participants et résultats.`,
                                   type: 'danger',
                                   confirmText: 'Supprimer',
                                   cancelText: 'Annuler'

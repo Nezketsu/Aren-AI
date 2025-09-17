@@ -213,12 +213,8 @@ export default function BracketFlow({ eventId, isOwner, currentUserId }: Bracket
   const [loading, setLoading] = useState(true)
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
   const toast = useToast()
-  const [showScoreInput, setShowScoreInput] = useState(false)
-  const [participant1Score, setParticipant1Score] = useState('')
-  const [participant2Score, setParticipant2Score] = useState('')
   const [submittingScore, setSubmittingScore] = useState(false)
   const [tempScores, setTempScores] = useState<{[participantId: string]: number}>({})
-  const [initialFitView, setInitialFitView] = useState(true)
   const [processedByes, setProcessedByes] = useState<Set<string>>(new Set())
   const [hasInitializedView, setHasInitializedView] = useState(false)
   
@@ -238,31 +234,6 @@ export default function BracketFlow({ eventId, isOwner, currentUserId }: Bracket
   const onNodesChange = useCallback((changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)), [setNodes])
   const onEdgesChange = useCallback((changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)), [setEdges])
 
-  // Fonction pour merger les résultats stockés avec les données du bracket
-  const mergeStoredResults = useCallback((bracketData: BracketRound[]) => {
-    console.log('🔄 Merging stored results:', storedResults)
-    console.log('📊 Bracket data before merge:', bracketData)
-    
-    const mergedData = bracketData.map(round => ({
-      ...round,
-      matches: round.matches.map(match => {
-        const storedResult = storedResults[match.id]
-        if (storedResult) {
-          console.log(`✅ Applying stored result for match ${match.name}:`, storedResult)
-          return {
-            ...match,
-            scores: storedResult.scores,
-            winner: storedResult.winner,
-            status: storedResult.status as 'ready' | 'waiting' | 'completed'
-          }
-        }
-        return match
-      })
-    }))
-    
-    console.log('📊 Bracket data after merge:', mergedData)
-    return mergedData
-  }, [storedResults])
 
   // Fonction pour stocker un résultat
   const storeMatchResult = useCallback((matchId: string, scores: {participantId: string; score: number}[], winner: string, status: string) => {

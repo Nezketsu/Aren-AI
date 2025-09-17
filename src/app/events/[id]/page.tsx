@@ -455,7 +455,7 @@ const EventDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
                                                             if (!res.ok) throw new Error(d.error || 'Join failed');
                                                             handleAutoApplyRefresh();
                                                         } catch (e: any) {
-                                                            toast.error('Erreur d\'inscription', e.message);
+                                                            toast.error('Erreur d&apos;inscription', e.message);
                                                         }
                                                     }}
                                                 >
